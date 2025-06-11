@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Film Arama Uygulaması</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #121212;
+      color: #f0f0f0;
+      padding: 20px;
+      margin: 0;
+      text-align: center;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    header img {
+      width: 40px;
+    }
+    h1 {
+      font-size: 26px;
+    }
+    .filtreler {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 25px;
+    }
+    .filtreler select {
+      padding: 8px;
+      border-radius: 5px;
+      border: none;
+      font-size: 14px;
+    }
+    .film-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+    }
+    .film-karti {
+      width: 200px;
+      background-color: #1e1e1e;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 0 5px rgba(255,255,255,0.1);
+      transition: transform 0.3s;
+      position: relative;
+    }
+    .film-karti:hover {
+      transform: scale(1.05);
+    }
+    .film-karti img {
+      width: 100%;
+      height: 270px;
+      object-fit: cover;
+    }
+    .film-karti h3 {
+      margin: 0;
+      padding: 10px;
+      font-size: 16px;
+    }
+    .favori-btn {
+      background-color: #444;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .favori-btn:hover {
+      background-color: #666;
+    }
+    .detay-container {
+      background-color: #1e1e1e;
+      margin-top: 30px;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+      text-align: left;
+    }
+    #favoriler {
+      margin-top: 40px;
+      text-align: left;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    #favoriler h2 {
+      border-bottom: 1px solid #555;
+      padding-bottom: 10px;
+    }
+    .favori-item {
+      background-color: #222;
+      margin: 8px 0;
+      padding: 10px;
+      border-radius: 6px;
+    }
+    .karar button {
+      margin-top: 30px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #3e8ed0;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .karar button:hover {
+      background-color: #5fa1e2;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <img src="https://cdn-icons-png.flaticon.com/512/7991/7991026.png" alt="logo" />
+    <h1>Film Arama Uygulaması</h1>
+  </header>
+
+  <div class="filtreler">
+    <!-- Film Türü filtresi -->
+    <select id="tur">
+      <option value="">🎬 Tür Seç</option>
+    </select>
+    <!-- Yerli/Yabancı filtresi -->
+    <select id="dil">
+      <option value="">🌍 Dil</option>
+      <option value="hepsi">Hepsi</option>
+      <option value="yerli">Yerli</option>
+      <option value="yabanci">Yabancı</option>
+    </select>
+    <!-- Siyah Beyaz/Renkli filtresi -->
+    <select id="renk">
+      <option value="">🎨 Görüntü</option>
+      <option value="hepsi">Hepsi</option>
+      <option value="siyahbeyaz">Siyah Beyaz</option>
+      <option value="renkli">Renkli</option>
+    </select>
+  </div>
+
+  <div class="film-container" id="filmListesi"></div>
+
+  <div class="karar">
+    <button onclick="kararsizSec()">🤔 Kararsızım! Hangisini izlemeliyim?</button>
+  </div>
+
+  <div id="detay" class="detay-container"></div>
+
+  <div id="favoriler">
+    <h2>⭐ Daha Sonra İzlenecekler</h2>
+    <div id="favoriListesi"></div>
+  </div>
+
+  <script>
+    const apiKey = "d60cace7";
+
+    // JSON dosyanızdaki filmleri türlerine göre gruplandırılmış örnek veri:
+    const filmler = {
+      Aksiyon: ["Gladiator", "Kurtlar Vadisi: Filistin", "Once Upon a Time in America", "Braveheart"],
+      Dram: ["Eşkıya", "Good Will Hunting", "Masumiyet", "The Pianist", "The Shawshank Redemption", "Forrest Gump", "Yol", "American Beauty", "The Godfather", "Parasite", "Titanic", "City Lights", "I Am a Fugitive from a Chain Gang"],
+      Komedi: ["Zübük", "G.O.R.A.", "A.R.O.G", "Arkadaşım Şeytan", "CM101MMXI Fundamentals", "Eyyvah Eyvah", "Arabesk"],
+      Animasyon: ["Ice Age", "Up", "Ratatouille", "How to Train Your Dragon", "Frozen"],
+      Romantik: ["Aşk Tesadüfleri Sever", "The Notebook", "La La Land", "Delibal", "Letter from an Unknown Woman", "Pride and Prejudice"],
+      Gerilim: ["Get Out", "Hereditary", "The Usual Suspects", "Pulp Fiction"],
+      Suç: ["Schindler's List", "Fight Club", "Pickpocket"],
+      Biyografi: ["It Happened One Night", "Modern Times", "Citizen Kane"],
+      Psikoloji: ["Eternal Sunshine of the Spotless Mind", "One Flew Over the Cuckoo's Nest", "A Clockwork Orange"],
+      Savaş: ["120"],
+      Fantastik: ["It"]
+    };
+
+    // Filmleri yerli/yabancı filtrelemek için (basit örnek: dil bilgisinde "turkish" geçiyorsa yerli sayıyoruz)
+    // Siyah beyaz filtre için; bilinen siyah beyaz filmler (örnek: "City Lights", "Modern Times") liste olarak belirleyelim.
+    const siyahBeyazFilmler = ["City Lights", "Modern Times"];
+
+    const turSelect = document.getElementById("tur");
+    const dilSelect = document.getElementById("dil");
+    const renkSelect = document.getElementById("renk");
+    const filmListesiDiv = document.getElementById("filmListesi");
+    const detayDiv = document.getElementById("detay");
+    const favoriListesiDiv = document.getElementById("favoriListesi");
+    const favoriler = [];
+    let gosterilenFilmler = [];
+
+    // Filtreye film türlerini ekle
+    Object.keys(filmler).forEach(tur => {
+      const opt = document.createElement("option");
+      opt.value = tur;
+      opt.innerText = tur;
+      turSelect.appendChild(opt);
+    });
+
+    // Filtre elemanlarının hepsine change eventi ekle
+    [turSelect, dilSelect, renkSelect].forEach(el => {
+      el.addEventListener("change", filtrele);
+    });
+
+    async function filtrele() {
+      const tur = turSelect.value;
+      const dil = dilSelect.value; // "hepsi", "yerli", "yabanci"
+      const renk = renkSelect.value; // "hepsi", "siyahbeyaz", "renkli"
+      const secilenler = filmler[tur] || [];
+      filmListesiDiv.innerHTML = "";
+      detayDiv.innerHTML = "";
+      gosterilenFilmler = [];
+
+      for (const film of secilenler) {
+        const res = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(film)}&apikey=${apiKey}`);
+        const data = await res.json();
+        gosterilenFilmler.push(data);
+
+        // Yerli/Yabancı kontrolü: data.Language alanında "turkish" var mı?
+        let dilDurum = true;
+        if (dil === "yerli") {
+          dilDurum = data.Language && data.Language.toLowerCase().includes("turkish");
+        } else if (dil === "yabanci") {
+          dilDurum = !(data.Language && data.Language.toLowerCase().includes("turkish"));
+        }
+        // Renk kontrolü: Eğer kullanıcı "siyahbeyaz" seçtiyse, film adı siyahBeyazFilmler içinde mi?
+        let renkDurum = true;
+        if (renk === "siyahbeyaz") {
+          renkDurum = siyahBeyazFilmler.includes(data.Title);
+        } else if (renk === "renkli") {
+          renkDurum = !siyahBeyazFilmler.includes(data.Title);
+        }
+
+        if (dilDurum && renkDurum) {
+          // Film kartını oluştur
+          const kart = document.createElement("div");
+          kart.className = "film-karti";
+          kart.innerHTML = `
+            <img src="${data.Poster}" alt="${data.Title}">
+            <h3>${data.Title}</h3>
+            <button class="favori-btn" onclick="favorilereEkle('${data.imdbID}', '${data.Title}')">⭐ Daha Sonra İzle</button>
+          `;
+          kart.onclick = () => detayGoster(data);
+          filmListesiDiv.appendChild(kart);
+        }
+      }
+    }
+
+    function detayGoster(film) {
+      detayDiv.innerHTML = `
+        <h2>${film.Title}</h2>
+        <p><strong>Yıl:</strong> ${film.Year}</p>
+        <p><strong>Tür:</strong> ${film.Genre}</p>
+        <p><strong>IMDb Puanı:</strong> ${film.imdbRating}</p>
+        <p><strong>Konu:</strong> ${film.Plot}</p>
+        <p><strong>Dil:</strong> ${film.Language}</p>
+        <img src="${film.Poster}" alt="${film.Title}" style="width: 100%; max-width: 300px; margin-top: 10px; border-radius: 8px;">
+      `;
+    }
+
+    function favorilereEkle(imdbID, title) {
+      if (!favoriler.some(f => f.imdbID === imdbID)) {
+        favoriler.push({ imdbID, title });
+        favoriListesiGuncelle();
+      }
+    }
+
+    function favoriListesiGuncelle() {
+      favoriListesiDiv.innerHTML = "";
+      favoriler.forEach(f => {
+        const div = document.createElement("div");
+        div.className = "favori-item";
+        div.textContent = f.title;
+        favoriListesiDiv.appendChild(div);
+      });
+    }
+
+    // KARARSIZ KALDIĞINDA ÖNERİ FONKSİYONU - Güncellenmiş hali:
+
+    function kararsizSec() {
+      if (gosterilenFilmler.length >= 2) {
+        const secim = gosterilenFilmler[Math.floor(Math.random() * gosterilenFilmler.length)];
+
+        const aciklamalar = {
+          "Gladiator": "Epik savaş sahneleri ve unutulmaz bir kahramanlık hikayesi seni bekliyor!",
+          "Forrest Gump": "Hayatın iniş çıkışlarıyla dolu, sıcacık bir dostluk ve azim öyküsü.",
+          "Titanic": "Efsane aşk ve trajediyi bir arada izlemek isteyenlere özel.",
+          "The Shawshank Redemption": "Umut ve özgürlüğün gücünü hissetmek için harika bir seçim.",
+          // Dilersen daha fazla film ekleyebilirsin
+        };
+
+        const rastgeleNotlar = [
+          "İyi seyirler! 🎬",
+          "Bu film ruhunuza iyi gelecek! 😊",
+          "Biraz keyif, biraz macera… Tam senlik!",
+          "Harika bir film deneyimi seni bekliyor!",
+          "Gözlerini ekrandan alamayacaksın! ✨"
+        ];
+
+        const aciklama = aciklamalar[secim.Title] || rastgeleNotlar[Math.floor(Math.random() * rastgeleNotlar.length)];
+
+        detayDiv.innerHTML = `
+          <h2>Sana önerim: ${secim.Title} 🎬</h2>
+          <p><strong>IMDb:</strong> ${secim.imdbRating}</p>
+          <p><strong>Konu:</strong> ${secim.Plot}</p>
+          <p style="margin-top: 15px; font-style: italic; color: #a0d8f7;">💡 ${aciklama}</p>
+        `;
+      } else {
+        alert("Lütfen önce en az iki film listeleyin.");
+      }
+    }
+  </script>
+
+</body>
+</html>
